@@ -17,4 +17,6 @@ public interface ReplicationSource {
 	 * @return An iterator pointing at the identified records.
 	 */
 	ReleasableIterator<ChangeContainer> getHistory(ReplicationQueryPredicates predicates);
+
+	ReleasableIterator<ChangeContainer> getHistory(String element, Long id, int version);
 }

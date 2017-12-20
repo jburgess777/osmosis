@@ -8,6 +8,7 @@ import org.openstreetmap.osmosis.apidb.v0_6.ApidbChangeReaderFactory;
 import org.openstreetmap.osmosis.apidb.v0_6.ApidbChangeWriterFactory;
 import org.openstreetmap.osmosis.apidb.v0_6.ApidbCurrentReaderFactory;
 import org.openstreetmap.osmosis.apidb.v0_6.ApidbFileReplicatorFactory;
+import org.openstreetmap.osmosis.apidb.v0_6.ApidbFileReplicatorLsnFactory;
 import org.openstreetmap.osmosis.apidb.v0_6.ApidbReaderFactory;
 import org.openstreetmap.osmosis.apidb.v0_6.ApidbTruncatorFactory;
 import org.openstreetmap.osmosis.apidb.v0_6.ApidbWriterFactory;
@@ -45,6 +46,8 @@ public class ApidbPluginLoader implements PluginLoader {
 		factoryMap.put("td", new ApidbTruncatorFactory());
 		factoryMap.put("replicate-apidb", new ApidbFileReplicatorFactory());
 		factoryMap.put("repa", new ApidbFileReplicatorFactory());
+		factoryMap.put("replicate-apidb-lsn", new ApidbFileReplicatorLsnFactory());
+		factoryMap.put("repalsn", new ApidbFileReplicatorLsnFactory());
 		
 		factoryMap.put("read-apidb-0.6", new ApidbReaderFactory());
 		factoryMap.put("read-apidb-change-0.6", new ApidbChangeReaderFactory());

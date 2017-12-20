@@ -61,6 +61,23 @@ public class AllEntityDao implements ReplicationSource {
 		}
 	}
 	
+	/**
+	 * Retrieves the change that corresponds to this new element.
+	 *
+	 * @param element
+	 *            Element type: node, way, relation
+	 * @return An iterator pointing at the identified records.
+	 */
+	public ReleasableIterator<ChangeContainer> getHistory(String element, Long id, int version) {
+		ReleasableIterator<ChangeContainer> result = null;
+		if ("nodes".equals(element))
+			result = nodeDao.getHistory(id, version);
+		else if ("ways".equals(element))
+			result = wayDao.getHistory(id, version);
+		else if ("relations".equals(element))
+			result = relationDao.getHistory(id, version);
+		return result;
+	}
 	
 	/**
 	 * Retrieves the changes that have were made between two points in time.

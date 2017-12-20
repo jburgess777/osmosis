@@ -473,6 +473,67 @@ public abstract class EntityDao<T extends Entity> {
 		return historyIterator;
 	}
 
+	/**
+	 * Retrieves the change that was made by a single update.
+	 *
+	 * @param id
+	 *            The object id.
+	 * @param version
+	 *            The object version.
+	 * @return An iterator pointing at the identified records.
+	 */
+	public ReleasableIterator<ChangeContainer> getHistory(Long id, int version) {
+		String selectedEntityTableName;
+		StringBuilder sql;
+		MapSqlParameterSource parameterSource;
+		ReleasableIterator<ChangeContainer> historyIterator;
+
+		parameterSource = new MapSqlParameterSource();
+
+		selectedEntityTableName = "tmp_" + entityName + "s";
+
+		jdbcTemplate.update("BEGIN");
+
+		sql = new StringBuilder();
+		sql.append("CREATE TEMPORARY TABLE ");
+		sql.append(selectedEntityTableName);
+		sql.append(" ON COMMIT DROP");
+		sql.append(" AS SELECT ");
+		sql.append(entityName);
+		sql.append("_id, version FROM ");
+		sql.append(entityName);
+		sql.append("s WHERE ");
+		sql.append(entityName);
+		sql.append("_id = ");
+		sql.append(id);
+		sql.append(" AND version = ");
+		sql.append(version);
+		sql.append(" AND redaction_id IS NULL");
+
+		LOG.log(Level.FINER, "Entity identification query: " + sql);
+
+		namedParamJdbcTemplate.update(sql.toString(), parameterSource);
+
+		jdbcTemplate.update("ALTER TABLE ONLY " + selectedEntityTableName
+				+ " ADD CONSTRAINT pk_" + selectedEntityTableName
+				+ " PRIMARY KEY (" + entityName + "_id, version)");
+		jdbcTemplate.update("ANALYZE " + selectedEntityTableName);
+
+		if (LOG.isLoggable(Level.FINER)) {
+			LOG.log(Level.FINER,
+					jdbcTemplate.queryForObject("SELECT Count(" + entityName + "_id) FROM " + selectedEntityTableName,
+							Integer.class) + " " + entityName + " records located.");
+		}
+
+		// Extract the data and obtain an iterator for the results.
+		historyIterator = getChangeHistory(selectedEntityTableName, new MapSqlParameterSource());
+
+		// The temp table is no longer required and can be deleted.
+		jdbcTemplate.execute("DROP TABLE " + selectedEntityTableName);
+		jdbcTemplate.update("ROLLBACK");
+
+		return historyIterator;
+	}
 
 	/**
 	 * Retrieves the changes that have were made between two points in time.
