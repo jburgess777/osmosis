@@ -137,37 +137,3 @@ INFO: NEW nodes 10 3
 Dec 20, 2017 11:48:26 PM org.openstreetmap.osmosis.apidb.v0_6.impl.ReplicatorLsn replicateImpl
 INFO: Replication sequence complete. LSN LSN{0/34D0490}...LSN{0/35106B8}
 
-
-
-
-One behavior I see is that postgres does not seem to notice that the code has
-read and acknowledged the receipt of the replicated data. The LSN values below
-have not changed:
-
-openstreetmap=# select * from pg_replication_slots ;
- slot_name |   plugin    | slot_type | datoid |   database    | active | active_pid | xmin | catalog_xmin | restart_lsn | confirmed_flush_lsn 
------------+-------------+-----------+--------+---------------+--------+------------+------+--------------+-------------+---------------------
- osmosis   | osm-logical | logical   |  24599 | openstreetmap | f      |          ¤ |    ¤ |        23551 | 0/34C1950   | 0/34C1988
-(1 row)
-
-I am not sure why this is, perhaps this comment in logicalfuncs.c gives the reason?
-
-postgres/src/backend/replication/logical/logicalfuncs.c
-
-	LogicalConfirmReceivedLocation(ctx->reader->EndRecPtr);
-
-	/*
-	 * If only the confirmed_flush_lsn has changed the slot won't get
-	 * marked as dirty by the above. Callers on the walsender
-	 * interface are expected to keep track of their own progress and
-	 * don't need it written out. But SQL-interface users cannot
-	 * specify their own start positions and it's harder for them to
-	 * keep track of their progress, so we should make more of an
-	 * effort to save it for them.
-	 *
-	 * Dirty the slot so it's written out at the next checkpoint.
-	 * We'll still lose its position on crash, as documented, but it's
-	 * better than always losing the position even on clean restart.
-	 */
-	ReplicationSlotMarkDirty();
-

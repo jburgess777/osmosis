@@ -265,6 +265,14 @@ public class ReplicatorLsn {
         stream.setAppliedLSN(state.getLsnMaxQueried());
         stream.setFlushedLSN(state.getLsnMaxQueried());
 
+        // The status messages are only sent periodically,
+        // force an update before we finish
+        try {
+            stream.forceUpdateStatus();
+        } catch (SQLException e) {
+            throw new OsmosisRuntimeException("Failed to update logical replication status.", e);
+        }
+
         LOG.info("Replication sequence complete: " + state.getLsnMax() + "..." + state.getLsnMaxQueried());
     }
 
